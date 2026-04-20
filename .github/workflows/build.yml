@@ -26,11 +26,9 @@ jobs:
           
       - name: Lint with flake8
         run: |
-          # Останавливаем сборку при синтаксических ошибках
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero означает, что предупреждения не останавливают сборку
           flake8 . --count --exit-zero --max-complexity=10 --statistics
           
       - name: Test with pytest
         run: |
-          pytest || echo "No tests found"
+          python -m pytest test_inventory.py -v
