@@ -105,7 +105,7 @@ class InventoryManager:
         self._items[item.sku] = item
         return True
 
-    def get_item(self, sku: str) -> InventoryItem | None:
+    def get_item(self, sku: str):
         """Получить товар по артикулу.
 
         Args:
