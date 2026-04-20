@@ -8,17 +8,22 @@ MAX_QUANTITY = 999999
 class InventoryItem:
     """Класс, представляющий отдельную позицию товара на складе."""
 
-    def __init__(self, name: str, sku: str, quantity: int):
+    def __init__(self, name: str, sku: str, quantity: int,
+                 category: str = "Без категории", min_stock: int = DEFAULT_LOW_STOCK_THRESHOLD):
         """Инициализация товара.
 
         Args:
             name: Название товара
             sku: Артикул (уникальный идентификатор)
             quantity: Начальное количество на складе
+            category: Категория запчасти (двигатель, тормоза и т.д.)
+            min_stock: Минимальный остаток для уведомления
         """
         self.name = name
         self.sku = sku
         self.quantity = quantity
+        self.category = category
+        self.min_stock = min_stock
 
     def _validate_amount(self, amount) -> bool:
         """Вспомогательный метод для проверки количества."""
@@ -78,6 +83,13 @@ class InventoryItem:
             bool: True если остаток <= порога, False в противном случае.
         """
         return self.quantity <= threshold
+
+    def get_info(self) -> str:
+        """Вернуть строку с информацией о товаре."""
+        status = "[!] МАЛО" if self.is_low_stock(self.min_stock) else "OK"
+        return (f"SKU: {self.sku} | {self.name} | "
+                f"Категория: {self.category} | "
+                f"Остаток: {self.quantity} | Статус: {status}")
 
 
 class InventoryManager:
@@ -163,3 +175,51 @@ class InventoryManager:
             int: Количество уникальных товаров.
         """
         return len(self._items)
+
+    def search_by_name(self, query: str) -> list:
+        """Поиск товаров по названию (без учёта регистра).
+
+        Args:
+            query: Строка поиска.
+
+        Returns:
+            list: Список подходящих товаров.
+        """
+        query = query.lower()
+        return [
+            item for item in self._items.values()
+            if query in item.name.lower()
+        ]
+
+    def get_by_category(self, category: str) -> list:
+        """Получить все товары по категории.
+
+        Args:
+            category: Название категории.
+
+        Returns:
+            list: Список товаров в категории.
+        """
+        return [
+            item for item in self._items.values()
+            if item.category.lower() == category.lower()
+        ]
+
+    def get_report(self) -> dict:
+        """Сводный отчёт по складу.
+
+        Returns:
+            dict: Статистика склада.
+        """
+        items = list(self._items.values())
+        total_units = sum(i.quantity for i in items)
+        low_stock = [i for i in items if i.is_low_stock(i.min_stock)]
+        categories = {}
+        for item in items:
+            categories[item.category] = categories.get(item.category, 0) + 1
+        return {
+            "total_items": len(items),
+            "total_units": total_units,
+            "low_stock_count": len(low_stock),
+            "categories": categories
+        }
